@@ -24,17 +24,13 @@ exports.createServer = function (options) {
   var crawlerPublicBase = options.crawlerPublicBase || '/crawler';
   var port = options.port || 8000;
 
-  var log = options.log ? 
-    function () { console.log.apply(this, arguments); } : 
-    function () {};
 
+  var serveStatic = function (reqUrl, response) {
 
-  var serveStatic = function (request, response) {
-
-    log('STATIC', request.url);
+    console.log('STATIC', reqUrl);
     
-    var filePath = staticBase + request.url;
-    if (request.url[request.url.length-1] === '/')
+    var filePath = staticBase + reqUrl;
+    if (reqUrl[reqUrl.length-1] === '/')
       filePath += 'index.html'
 
     fs.exists(filePath, function(exists) {
@@ -66,11 +62,11 @@ exports.createServer = function (options) {
 
   var content = null; // TODO caching for testing
 
-  var serveCrawler = function (request, response) {
+  var serveCrawler = function (reqUrl, response) {
 
-    log('DYNAMIC', request.url);
+    console.log('DYNAMIC', reqUrl);
 
-    var crawlerName = request.url.substring(crawlerPublicBase.length);
+    var crawlerName = reqUrl.substring(crawlerPublicBase.length);
     var filePath = crawlerBase + crawlerName + '.js';
 
     fs.stat(filePath, function(err, stats) {
@@ -100,16 +96,18 @@ exports.createServer = function (options) {
 
   http.createServer(function (request, response) {
 
+    var reqUrl = path.normalize(request.url);
+
     if (crawlerBase !== undefined && crawlerBase !== null && 
-        request.url.indexOf(crawlerPublicBase) === 0) {
+        reqUrl.indexOf(crawlerPublicBase) === 0) {
 
       // search crawler and execute it
-      serveCrawler(request, response);
+      serveCrawler(reqUrl, response);
 
     } else if (staticBase !== undefined && staticBase !== null) {
 
       // search static file and return it
-      serveStatic(request, response);
+      serveStatic(reqUrl, response);
 
     } else {
 
