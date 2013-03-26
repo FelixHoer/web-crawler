@@ -77,12 +77,18 @@ exports.createServer = function (options) {
      
       if (err || !stats.isFile()) {
         response.writeHead(404);
-        response.end();
+        response.end('No crawler registered for given name');
         return;
       }
 
       var crawler = require(filePath);
       crawler.crawl(function (error, content) {
+        if (error) {
+          response.writeHead(500);
+          response.end('Error during crawl');
+          return;
+        }
+
         response.writeHead(200, { 'Content-Type': mimes['.json'] });
         response.end(JSON.stringify(content), 'utf-8');
       });
