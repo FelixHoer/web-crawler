@@ -3,24 +3,23 @@
 The `web-crawler` allows you to extract data from dynamic web pages in a powerful, jet convenient way. This is possible by using a headless browser, that injects your crawl-code into the running page-context.
 It also provides a web-server, that serves crawl-results and static files to process and display the gathered information.
 
-# usage
+# Usage
 
-You can either use only the crawler component in your node.js application, 
-or you can also use the web-server component to serve crawl-results and display them with additional static files.
+You can either use only the crawler component in your node.js application, or you can also use the web-server component to serve crawl-results and display them with additional static files.
 
-## crawler only
-
-TODO example
-
-## crawler with web-server
+## Crawler only
 
 TODO example
 
-# install
+## Crawler with Web-Server
+
+TODO example
+
+# Install
 
 1. Install [node.js]()
 
-  I assume you have already installed node. If not, [do so now!](https://github.com/joyent/node)
+  I assume that you have already installed node. If not, [do so now!](https://github.com/joyent/node)
 
 2. Download [PhantomJS]()
 
@@ -31,22 +30,91 @@ TODO example
 
   That is quite easy with `npm`.
 
-  ```
+  ```bash
   cd web-crawler
   npm install node-phantom
   ```
 
-# api
+# API
 
-TODO
+## crawler.process(url, extractFunction, callback)
 
-# dependencies
+Queues the crawling of given url with extractFunction. The callback will be called with results after data has been extracted.
+
+Parameters:
+
+  * `url`: String
+    The url that should be crawled.
+
+  * `extractFunction`: function()
+    This function will be executed in the context of the page, that is referenced by url. It's return value will be the result-parameter of the callback function. 
+    Because this function will be executed in the sandboxed brower-environment, no data be closed in or out (with a closure). Also, the return value is limited to about everything that can be serialized via JSON.
+
+  * `callback`: function(error, result)
+    This function will either be called if an error occured or after the extractFunction has been executed. The result will be whatever extractFunction has returned.
+
+Example:
+
+```js
+var crawler = require('./path/to/crawler.js');
+var extractTitle = function () {
+  return document.title;
+};
+crawler.crawl('http://example.com', extractTitle, function (error, result) {
+  console.log('crawl-result', error, result);
+});
+```
+
+## crawl-server.createServer(options)
+
+Creates the web server, that serves static files and provides access to the crawlers.
+
+Options:
+
+  * `staticBase`: String
+    This directory will be served as web-root, so all files within will be accessible.
+    If it is not provided, no static files will be served.
+
+  * `crawlerBase`: String
+    The crawlers in this directory will be accessible under crawlerPublicBase.
+    If it is not provided, no crawlers will be accessible.
+
+  * `crawlerPublicBase`: String
+    The url under which the crawlers can be accessed. The default is `/crawler`.
+
+  * `port`: Number
+    The port on which the server should run. The default is 8000.
+
+Example:
+
+```js
+var crawlServer = require('./path/to/crawl-server.js');
+crawlServer.createServer({
+  staticBase: '/my/project/static-files',
+  crawlerBase: '/my/project/crawler-files',
+  crawlerPublicBase: '/crawl-data', 
+  port: 12000 
+});
+```
+
+# Documentation
+
+The [Annotated Source Code](http://felixhoer.github.com/web-crawler/crawl-server.js.html) is available as Github-Page.
+
+The documentation can be built with [docker](https://github.com/jbt/docker).
+If you have it installed run following command:
+
+```bash
+docker -o doc *.js
+```
+
+# Dependencies
 
 * [node.js]() (tested with 0.8.19) : JavaScript on the server-side
 * [PhantomJS]() (tested with 1.9.0) : a headless browser
 * [node-phantom]() (tested with 0.2.1): bridge between phantom and node
 
-# license
+# License
 
 web-crawler is MIT licensed.
 
