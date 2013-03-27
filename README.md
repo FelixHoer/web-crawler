@@ -29,19 +29,21 @@ TODO example
 3. Install [node-phantom]()
 
   That is quite easy with `npm`.
+  Because `node-phantom` has a tiny bug you may want to install my fixed version. (Use the official version after the [Pull-Request](https://github.com/alexscheelmeyer/node-phantom/pull/39) has been accepted)
 
   ```bash
   cd web-crawler
-  npm install node-phantom
+  npm install https://github.com/FelixHoer/node-phantom/tarball/master
+  # npm install node-phantom # use this official version when fixed
   ```
 
 # API
 
-## crawler.process(url, extractFunction, callback)
+## crawler.process(options)
 
 Queues the crawling of given url with extractFunction. The callback will be called with results after data has been extracted.
 
-Parameters:
+Options:
 
   * `url`: String
     The url that should be crawled.
@@ -53,15 +55,25 @@ Parameters:
   * `callback`: function(error, result)
     This function will either be called if an error occured or after the extractFunction has been executed. The result will be whatever extractFunction has returned.
 
+  * `scripts`: String[]
+    The scripts will be injected into the page's context before the extractFunction is executed.
+    If a script-path starts with http or https it will be loaded from the server and subsequently injected. Otherwise it will be loaded from the local filesystem.
+    This option is optional.
+
+
 Example:
 
 ```js
 var crawler = require('./path/to/crawler.js');
-var extractTitle = function () {
-  return document.title;
-};
-crawler.crawl('http://example.com', extractTitle, function (error, result) {
-  console.log('crawl-result', error, result);
+crawler.crawl({
+  url: 'http://example.com',
+  scripts: [ 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js' ],
+  extractFunction: function () {
+    return document.title;
+  },
+  callback: function (error, result) {
+    console.log('crawl-result', error, result);
+  }
 });
 ```
 

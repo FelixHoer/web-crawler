@@ -120,7 +120,8 @@ var createQueue = function () {
   // {
   //   url: 'http://myhost.com/site-to-crawl.html',
   //   extractorFunction: function () {},
-  //   callback: function (error, result) {}
+  //   callback: function (error, result) {},
+  //   scripts: String[], optional
   // }
   // ```
   var requests = [];
@@ -145,6 +146,36 @@ var createQueue = function () {
       });
     };
 
+    // Injects all scripts, that were given via `request.scripts`.
+    // Load script from a server if it starts with http or https.
+    // Otherwise it will be loaded from local file system.
+    var injectScripts = function (page, callback) {
+      var scripts = request.scripts || [];
+
+      var injectScript = function (script, callback) {
+        var isRemoteFile = script.indexOf('http://') === 0 || 
+                           script.indexOf('https://') === 0;
+        var includeFunction = isRemoteFile ? 'includeJs' : 'injectJs';
+        page[includeFunction](script, callback);
+      };
+
+      var injectAll = function (number) {
+        number = number || 0;
+
+        if (number >= scripts.length)
+          return callback(null);
+
+        var script = scripts[number];
+        injectScript(script, function (err) {
+          if (err)
+           return callback(err);
+          injectAll(number+1);
+        });
+      };
+
+      injectAll();
+    };
+
     // Extracts data from the page using `request.extractFunction`.
     var extractData = function (page, callback) {
       page.evaluate(request.extractFunction, callback);
@@ -153,20 +184,32 @@ var createQueue = function () {
     console.log('processing request', request.url);
 
     createPage(function (err, page) {
-      if (err)
+      if (err) {
+        request.callback(err);
         return callback(err);
-      extractData(page, function (err, result) {
-        if (err)
+      }
+      injectScripts(page, function (err) {
+        if (err) {
+          page.close();
+          request.callback(err);
           return callback(err);
+        }
+        extractData(page, function (err, result) {
+          if (err) {
+            page.close();
+            request.callback(err);
+            return callback(err);
+          }
 
-        console.log('processed request', request.url);
+          console.log('processed request', request.url);
 
-        page.close();
+          page.close();
 
-        // Call the request.callback to return the result and the local callback
-        // to notify the randomlyPeriodic, that the extraction has ended
-        request.callback(null, result);
-        callback();
+          // Call the request.callback to return the result and the local callback
+          // to notify the randomlyPeriodic, that the extraction has ended
+          request.callback(null, result);
+          callback();
+        });
       });
     });
 
@@ -268,22 +311,20 @@ var waitForSetup = function (setupFunction, regularFunction) {
 /*
   ## process
   Queues crawling of given pageUrl with extractFunction.
+  Injects local and remote scripts before extraction, if some are given.
   The callback will be called with results after data has been extracted.
-  @param {String} pageUrl url to the page that should be crawled
+  @param {Request} request Object that holds the options listed below.
+  @param {String} url url to the page that should be crawled
+  @param {String[]} scripts local or remote scripts to be injected (optional)
   @param {function} extractFunction function that is executed in the page's context
   @param {function(error, result)} callback called after extractFunction was executed
 */
-var process = function (pageUrl, extractFunction, callback) {
+var process = function (request) {
   // Acquires queue for host of pageUrl.
-  var host = url.parse(pageUrl).host;
+  var host = url.parse(request.url).host;
   var queue = getQueue(host);
 
   // Lets that queue process the request.
-  var request = {
-    url: pageUrl,
-    extractFunction: extractFunction,
-    callback: callback
-  };
   queue.process(request);
 };
 
