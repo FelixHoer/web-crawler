@@ -14,16 +14,16 @@ var MAX_TIMEOUT = 1000;
 var phantomjs = null;
 
 
-//# Randomly Periodic ##########################################################
+//# Queue ######################################################################
 
 
 /*
-  ## getRandomTime
+  ## getRandomInRange
   @param {Number} min lower limit
   @param {Number} max upper limit
   @return a random number between min and max
 */
-var getRandomTime = function (min, max) {
+var getRandomInRange = function (min, max) {
   return min + Math.random() * (max-min);
 };
 
@@ -34,211 +34,58 @@ var getRandomTime = function (min, max) {
   @param {function()} callback called after random time
 */
 var setRandomTimeout = function (callback) {
-  var time = getRandomTime(MIN_TIMEOUT, MAX_TIMEOUT);
+  var time = getRandomInRange(MIN_TIMEOUT, MAX_TIMEOUT);
   return setTimeout(callback, time);
 };
 
 /*
-  ## randomlyPeriodic
-  Executes callback periodically after random time. 
-  The callback has to signal it's completion by calling it's done function.
-  @param {function(done)} callback called periodically after random time
-  @param {function()} done called from user to signal that callback is done
-*/
-var randomlyPeriodic = function (callback) {
-
-  // Holds the timeoutId returned by setTimeout, to clear it.
-  var timeout = null;
-
-  /*
-    ### startPeriodic
-    Recursively calls setRandomTimeout with the provided callback.
-    Stops itself if setRunning(false) has been called (so timeout is null).
-  */
-  var startPeriodic = function () {
-    timeout = setRandomTimeout(function () {
-      callback(function () {
-        if (timeout !== null)
-          startPeriodic();
-      });
-    });
-  };
-
-  /*
-    ### stopPeriodic
-    Aborts a running startPeriodic-Timeout.
-  */
-  var stopPeriodic = function () {
-    clearTimeout(timeout);
-    timeout = null;
-  };
-
-  /*
-    ### setRunning
-    Starts or stops the periodic execution of the given callback.
-    @param {Boolean} run to start or stop the execution
-  */
-  var setRunning = function (run) {
-    if (timeout === null && run) {
-      console.log('starting queue processing');
-      startPeriodic();
-    } else if (timeout !== null && !run) {
-      console.log('stopping queue processing');
-      stopPeriodic();
-    }
-  };
-
-  /*
-    ### isRunning
-    @return true, if a timeout is running
-  */
-  var isRunning = function () {
-    return timeout !== null;
-  };
-
-  /*
-    @return {function} **setRunning** see setRunning above
-    @return {function} **isRunning** see isRunning above
-  */
-  return {
-    setRunning: setRunning,
-    isRunning: isRunning
-  };
-
-};
-
-
-//# Queue ######################################################################
-
-/*
   ## createQueue
+  @param {function(item, callback)} processFunction processes the given item
+    and calls callback when done.
 */
-var createQueue = function () {
+var createQueue = function (processFunction) {
 
-  // Holds items of type **Request**.
-  // ```js
-  // {
-  //   url: 'http://myhost.com/site-to-crawl.html',
-  //   extractorFunction: function () {},
-  //   callback: function (error, result) {},
-  //   scripts: String[], optional
-  // }
-  // ```
-  var requests = [];
+  var items = [];
+  var running = false;
 
-  /*
-    ## processRequest
-    Makes a HTTP-Request for request.url and extracts data from the page's 
-    context using request.extractFunction.
-    @param {Request} request the queued Crawl-Request
-    @param {function()} callback to signal when the request has finished
-  */
-  var processRequest = function (request, callback) {
-
-    // Creates the page and opens the url given by `request.url`.
-    var createPage = function (callback) {
-      phantomjs.createPage(function (err, page) {
-        if (err)
-          return callback(err);
-        page.open(request.url, function (err) {
-          callback(err, page);
-        });
-      });
-    };
-
-    // Injects all scripts, that were given via `request.scripts`.
-    // Load script from a server if it starts with http or https.
-    // Otherwise it will be loaded from local file system.
-    var injectScripts = function (page, callback) {
-      var scripts = request.scripts || [];
-
-      var injectScript = function (script, callback) {
-        var isRemoteFile = script.indexOf('http://') === 0 || 
-                           script.indexOf('https://') === 0;
-        var includeFunction = isRemoteFile ? 'includeJs' : 'injectJs';
-        page[includeFunction](script, callback);
-      };
-
-      var injectAll = function (number) {
-        number = number || 0;
-
-        if (number >= scripts.length)
-          return callback(null);
-
-        var script = scripts[number];
-        injectScript(script, function (err) {
-          if (err)
-           return callback(err);
-          injectAll(number+1);
-        });
-      };
-
-      injectAll();
-    };
-
-    // Extracts data from the page using `request.extractFunction`.
-    var extractData = function (page, callback) {
-      page.evaluate(request.extractFunction, callback);
-    };
-
-    console.log('processing request', request.url);
-
-    createPage(function (err, page) {
-      if (err) {
-        request.callback(err);
-        return callback(err);
-      }
-      injectScripts(page, function (err) {
-        if (err) {
-          page.close();
-          request.callback(err);
-          return callback(err);
-        }
-        extractData(page, function (err, result) {
-          if (err) {
-            page.close();
-            request.callback(err);
-            return callback(err);
-          }
-
-          console.log('processed request', request.url);
-
-          page.close();
-
-          // Call the request.callback to return the result and the local callback
-          // to notify the randomlyPeriodic, that the extraction has ended
-          request.callback(null, result);
-          callback();
-        });
-      });
-    });
-
+  // Adds an item to the queue and 
+  // starts periodical processing if not already running.
+  var addToQueue = function (item) {
+    items.push(item);
+    if (!running)
+      processPeriodically();
+    running = true;
   };
 
-  // Creates a `randomlyPeriodic` and processes one `Request` in each cycle.
-  // If no more requests are available the periodic is paused.
-  var periodic = randomlyPeriodic(function (next) {
-    var request = requests.shift();
-    processRequest(request, function () {
-      if (requests.length === 0)
-        periodic.setRunning(false);
-      next();
+  // Takes an item from the queue and 
+  // stops further processing if none is available anymore.
+  var takeFromQueue = function () {
+    var item = items.shift();
+    if (items.length === 0)
+      running = false;
+    return item;
+  };
+
+  // Takes items from the queue and processes them one after another 
+  // (with random timeout) until no more are available.
+  var processPeriodically = function () {
+    setRandomTimeout(function () {
+      var item = takeFromQueue();
+      processFunction(item, function () {
+        if (running)
+          processPeriodically();
+      });
     });
-  });
+  };
 
   /*
-    @return {function(Request)} **process** adds the Request to the 
-      requests-Array and starts the randomlyPeriodic
+    @return {function(anything)} **process** see addToQueue
   */
   return {
-    process: function (request) {
-      requests.push(request);
-      periodic.setRunning(true);
-    }
+    process: addToQueue
   };
 
 };
-
 
 /*
   ## getQueue
@@ -253,12 +100,115 @@ var getQueue = (function () {
   
   return function (host) {
     if (!queues[host])
-      queues[host] = createQueue(host)
+      queues[host] = createQueue(processRequest);
     
     return queues[host];
   };
 
 })();
+
+
+//# Process Crawl-Request ######################################################
+
+
+// The type **Request** looks like this:
+// ```js
+// {
+//   url: 'http://myhost.com/site-to-crawl.html',
+//   extractorFunction: function () {},
+//   callback: function (error, result) {},
+//   scripts: String[], optional
+// }
+// ```
+
+/*
+  ## processRequest
+  Makes a HTTP-Request for request.url and extracts data from the page's 
+  context using request.extractFunction.
+  @param {Request} request the queued Crawl-Request
+  @param {function()} callback to signal when the request has finished
+*/
+var processRequest = function (request, callback) {
+
+  // Creates the page and opens the url given by `request.url`.
+  var createPage = function (callback) {
+    phantomjs.createPage(function (err, page) {
+      if (err)
+        return callback(err);
+      page.open(request.url, function (err) {
+        callback(err, page);
+      });
+    });
+  };
+
+  // Injects all scripts, that were given via `request.scripts`.
+  // Load script from a server if it starts with http or https.
+  // Otherwise it will be loaded from local file system.
+  var injectScripts = function (page, callback) {
+    var scripts = request.scripts || [];
+
+    var injectScript = function (script, callback) {
+      var isRemoteFile = script.indexOf('http://') === 0 || 
+                         script.indexOf('https://') === 0;
+      var includeFunction = isRemoteFile ? 'includeJs' : 'injectJs';
+      page[includeFunction](script, callback);
+    };
+
+    var injectAll = function (number) {
+      number = number || 0;
+
+      if (number >= scripts.length)
+        return callback(null);
+
+      var script = scripts[number];
+      injectScript(script, function (err) {
+        if (err)
+         return callback(err);
+        injectAll(number+1);
+      });
+    };
+
+    injectAll();
+  };
+
+  // Extracts data from the page using `request.extractFunction`.
+  var extractData = function (page, callback) {
+    page.evaluate(request.extractFunction, callback);
+  };
+
+  // Then actually perform the steps and handle errors.
+  console.log('processing request', request.url);
+  createPage(function (err, page) {
+    if (err) {
+      request.callback(err);
+      return callback(err);
+    }
+    injectScripts(page, function (err) {
+      if (err) {
+        page.close();
+        request.callback(err);
+        return callback(err);
+      }
+      extractData(page, function (err, result) {
+        if (err) {
+          page.close();
+          request.callback(err);
+          return callback(err);
+        }
+
+        console.log('processed request', request.url);
+
+        page.close();
+
+        // Call the request.callback to return the result and 
+        // the local callback to notify the queu, that the extraction has ended.
+        request.callback(null, result);
+        callback();
+      });
+    });
+  });
+
+};
 
 
 //# Export #####################################################################
