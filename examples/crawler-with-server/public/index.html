@@ -1,0 +1,20 @@
+<html>
+<head>
+  <title>My Results</title>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+  </script>
+  <script>
+    $(function () {
+      $.getJSON('/crawler/my-crawler', function(data) {
+        $('h1').append('The shop "' + data.title + '" offers:');
+        for (var i = 0; i < data.products.length; i++)
+          $('ul').append('<li>' + data.products[i].name + '</li>');
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1></h1>  <!-- The shop "X" offers: -->
+  <ul></ul>  <!-- list of product names -->
+</body>
+</html>

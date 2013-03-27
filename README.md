@@ -7,13 +7,133 @@ It also provides a web-server, that serves crawl-results and static files to pro
 
 You can either use only the crawler component in your node.js application, or you can also use the web-server component to serve crawl-results and display them with additional static files.
 
+Consider crawling the page at url `http://example.com/shop`:
+
+```html
+<html>
+<head>
+  <title>Example Shop</title>
+</head>
+<body>
+  <h1>Welcome to this shop!</h1>
+  <ul>
+    <li><a href="http://example.com/shop/123">computer</a></li>
+    <li><a href="http://example.com/shop/987">phone</a></li>
+    <li><a href="http://example.com/shop/159">tablet</a></li>
+  </ul>
+</body>
+</html>
+```
+
 ## Crawler only
 
-TODO example
+Execute the following file with node:
+
+```js
+var crawler = require('./path/to/web-crawler/crawler.js');
+
+crawler.process({
+  url: 'http://example.com/shop', 
+  scripts: [ 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js' ],
+  extractFunction: function () {
+    // will be executed in the page context of the brower
+    // with jQuery already loaded/injected
+    return {
+      title: document.title,
+      products: jQuery('ul a').map(function () {
+        return { name: this.innerText, url: this.href };
+      }).toArray()
+    };
+  }, 
+  callback: function (error, result) {
+    if (error) console.log('an error has occured', error);
+    else console.log('crawl successful', result);
+  }
+});
+```
+
+Which should display (not in that exact order):
+
+```js
+{
+  title: 'Example Shop',
+  products: [ 
+    { name: 'computer', url: 'http://example.com/shop/123' },
+    { name: 'phone', url: 'http://example.com/shop/987' },
+    { name: 'tablet', url: 'http://example.com/shop/159' } 
+  ]
+}
+```
 
 ## Crawler with Web-Server
 
-TODO example
+Start the web server like that (`my-server.js`):
+
+```js
+var crawlServer = require('./path/to/web-crawler/crawl-server');
+
+crawlServer.createServer({
+  staticBase:  __dirname + '/public',
+  crawlerBase: __dirname + '/crawler'
+});
+```
+
+This will start a web server on port 8000, that uses crawlers in the `crawler` folder and serves static content from `public`.
+
+Then create a crawler (`crawler/my-crawler.js`):
+
+```js
+var crawler = require('./path/to/web-crawler/crawler.js');
+
+var extractTitleAndProducts = function () {
+  return {
+    title: document.title,
+    products: jQuery('ul a').map(function () {
+      return { name: this.innerText, url: this.href };
+    }).toArray()
+  };
+};
+
+exports.crawl = function (done) {
+  crawler.process({
+    url: 'http://example.com/shop', 
+    scripts: [ 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js' ],
+    extractFunction: extractTitleAndProducts, 
+    callback: done
+  });
+};
+```
+
+This crawler works like the one above but exports a `crawl` function, that takes a callback-function with the arguments error and result. By doing so it fulfills the requirements for a crawler.
+
+The crawler can now be executed at <http://localhost:8000/crawler/my-crawler>, which returns the JSON-encoded crawl-result.
+
+To process and display the crawled data you can add static files (`public/index.html`):
+
+```html
+<html>
+<head>
+  <title>My Results</title>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+  </script>
+  <script>
+    $(function () {
+      $.getJSON('/crawler/my-crawler', function(data) {
+        $('h1').append('The shop "' + data.title + '" offers:');
+        for (var i = 0; i < data.products.length; i++)
+          $('ul').append('<li>' + data.products[i].name + '</li>');
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1></h1>  <!-- The shop "X" offers: -->
+  <ul></ul>  <!-- list of product names -->
+</body>
+</html>
+```
+
+This page will be available at <http://localhost:8000/index.html>.
 
 # Install
 
@@ -107,6 +227,43 @@ crawlServer.createServer({
   crawlerPublicBase: '/crawl-data', 
   port: 12000 
 });
+```
+
+## Crawler Interface (for crawl-server)
+
+To implement a crawler-file, it has to export a `crawl` function (described below).
+
+### crawl(callback)
+
+The crawl function sould somehow acquire data and return it by invoking the callback.
+
+Parameters:
+
+  * callback: function (error, result)
+    * error: undefined/null or anything
+    * result: anything
+
+    If error is `undefined` or `null`, the crawl function has failed.
+    Otherwise result holds the extracted data.
+
+Example: 
+
+```js
+var crawler = require('./path/to/crawler.js');
+
+var extractTitle = function () {
+  return document.title;
+};
+
+exports.crawl = function (callback) {
+  crawler.crawl({
+    url: 'http://example.com',
+    extractFunction: extractTitle,
+    callback: function (error, result) {
+      callback(error, result);
+    }
+  });
+};
 ```
 
 # Documentation
