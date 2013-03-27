@@ -269,7 +269,6 @@ starts periodical processing if not already running.</p>
     <span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">running</span><span class="p">)</span>
       <span class="nx">processPeriodically</span><span class="p">();</span>
-    <span class="nx">running</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
   <span class="p">};</span>
 
 
@@ -281,35 +280,18 @@ starts periodical processing if not already running.</p>
 <div class="pilwrap">
   <a class="pilcrow" href="#section-10" id="section-10">&#182;</a>
 </div>
-<p>Takes an item from the queue and 
-stops further processing if none is available anymore.</p>
-        </td>
-        <td class="code highlight"><div class="highlight"><pre>
-  <span class="kd">var</span> <span class="nx">takeFromQueue</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nx">items</span><span class="p">.</span><span class="nx">shift</span><span class="p">();</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span>
-      <span class="nx">running</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="k">return</span> <span class="nx">item</span><span class="p">;</span>
-  <span class="p">};</span>
-
-
-</pre></div>
-        </td>
-      </tr>
-      <tr>
-        <td class="docs">
-<div class="pilwrap">
-  <a class="pilcrow" href="#section-11" id="section-11">&#182;</a>
-</div>
 <p>Takes items from the queue and processes them one after another 
 (with random timeout) until no more are available.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
   <span class="kd">var</span> <span class="nx">processPeriodically</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="nx">running</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
     <span class="nx">setRandomTimeout</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-      <span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nx">takeFromQueue</span><span class="p">();</span>
+      <span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nx">items</span><span class="p">.</span><span class="nx">shift</span><span class="p">();</span>
       <span class="nx">processFunction</span><span class="p">(</span><span class="nx">item</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">running</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> 
+          <span class="nx">running</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="k">else</span> 
           <span class="nx">processPeriodically</span><span class="p">();</span>
       <span class="p">});</span>
     <span class="p">});</span>
@@ -322,7 +304,7 @@ stops further processing if none is available anymore.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-12" id="section-12">&#182;</a>
+  <a class="pilcrow" href="#section-11" id="section-11">&#182;</a>
 </div>
 <div class="dox">
   <div class="summary">
@@ -391,7 +373,7 @@ stops further processing if none is available anymore.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-14" id="section-14">&#182;</a>
+  <a class="pilcrow" href="#section-13" id="section-13">&#182;</a>
 </div>
 <p>Maps from host to Queue.</p>
         </td>
@@ -432,7 +414,7 @@ stops further processing if none is available anymore.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-16" id="section-16">&#182;</a>
+  <a class="pilcrow" href="#section-15" id="section-15">&#182;</a>
 </div>
 <p>The type <strong>Request</strong> looks like this:</p>
 
@@ -494,7 +476,7 @@ context using request.extractFunction.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-18" id="section-18">&#182;</a>
+  <a class="pilcrow" href="#section-17" id="section-17">&#182;</a>
 </div>
 <p>Creates the page and opens the url given by <code>request.url</code>.</p>
         </td>
@@ -516,7 +498,7 @@ context using request.extractFunction.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-19" id="section-19">&#182;</a>
+  <a class="pilcrow" href="#section-18" id="section-18">&#182;</a>
 </div>
 <p>Injects all scripts, that were given via <code>request.scripts</code>.
 Load script from a server if it starts with http or https.
@@ -557,7 +539,7 @@ Otherwise it will be loaded from local file system.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-20" id="section-20">&#182;</a>
+  <a class="pilcrow" href="#section-19" id="section-19">&#182;</a>
 </div>
 <p>Extracts data from the page using <code>request.extractFunction</code>.</p>
         </td>
@@ -573,7 +555,7 @@ Otherwise it will be loaded from local file system.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-21" id="section-21">&#182;</a>
+  <a class="pilcrow" href="#section-20" id="section-20">&#182;</a>
 </div>
 <p>Then actually perform the steps and handle errors.</p>
         </td>
@@ -608,7 +590,7 @@ Otherwise it will be loaded from local file system.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-22" id="section-22">&#182;</a>
+  <a class="pilcrow" href="#section-21" id="section-21">&#182;</a>
 </div>
 <p>Call the request.callback to return the result and 
 the local callback to notify the queu, that the extraction has ended.</p>
@@ -687,7 +669,7 @@ the local callback to notify the queu, that the extraction has ended.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-25" id="section-25">&#182;</a>
+  <a class="pilcrow" href="#section-24" id="section-24">&#182;</a>
 </div>
 <p>Stores the given args in the queue.</p>
         </td>
@@ -703,7 +685,7 @@ the local callback to notify the queu, that the extraction has ended.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-26" id="section-26">&#182;</a>
+  <a class="pilcrow" href="#section-25" id="section-25">&#182;</a>
 </div>
 <p>This function is called as callback from the setupFunction.
 It makes all previously queued calls to regularFunction.</p>
@@ -724,7 +706,7 @@ It makes all previously queued calls to regularFunction.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-27" id="section-27">&#182;</a>
+  <a class="pilcrow" href="#section-26" id="section-26">&#182;</a>
 </div>
 <p>The first time: call setupFunction and queue the call to regularFunction.</p>
         </td>
@@ -741,7 +723,7 @@ It makes all previously queued calls to regularFunction.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-28" id="section-28">&#182;</a>
+  <a class="pilcrow" href="#section-27" id="section-27">&#182;</a>
 </div>
 <p>While setupFunction has not completed: queue the call to regularFunction.</p>
         </td>
@@ -756,7 +738,7 @@ It makes all previously queued calls to regularFunction.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-29" id="section-29">&#182;</a>
+  <a class="pilcrow" href="#section-28" id="section-28">&#182;</a>
 </div>
 <p>After setupFunction has completed: actually call regularFunction.</p>
         </td>
@@ -829,7 +811,7 @@ The callback will be called with results after data has been extracted.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-31" id="section-31">&#182;</a>
+  <a class="pilcrow" href="#section-30" id="section-30">&#182;</a>
 </div>
 <p>Acquires queue for host of pageUrl.</p>
         </td>
@@ -844,7 +826,7 @@ The callback will be called with results after data has been extracted.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-32" id="section-32">&#182;</a>
+  <a class="pilcrow" href="#section-31" id="section-31">&#182;</a>
 </div>
 <p>Lets that queue process the request.</p>
         </td>
