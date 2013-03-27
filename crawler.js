@@ -54,25 +54,18 @@ var createQueue = function (processFunction) {
     items.push(item);
     if (!running)
       processPeriodically();
-    running = true;
-  };
-
-  // Takes an item from the queue and 
-  // stops further processing if none is available anymore.
-  var takeFromQueue = function () {
-    var item = items.shift();
-    if (items.length === 0)
-      running = false;
-    return item;
   };
 
   // Takes items from the queue and processes them one after another 
   // (with random timeout) until no more are available.
   var processPeriodically = function () {
+    running = true;
     setRandomTimeout(function () {
-      var item = takeFromQueue();
+      var item = items.shift();
       processFunction(item, function () {
-        if (running)
+        if (items.length === 0) 
+          running = false;
+        else 
           processPeriodically();
       });
     });
