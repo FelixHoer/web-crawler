@@ -1,0 +1,82 @@
+<html>
+<head>
+    <title>The Movie Database</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+</head>
+<body>
+    <h1>The Movie Database</h1>
+    <div id="search">
+        <input type="text" placeholder="Movie Name" />
+        <input type="submit" value="Search" />
+    </div>
+    <hr />
+    <div id="result">Nothing yet.</div>
+
+    <script>
+    $(function () {
+        var SERVERSIDE_DB = [
+            { name: "Ride Along", desc: "Fast-talking security guard Ben joins his cop brother-in-law James on a 24-hour patrol of Atlanta in order to prove himself worthy of marrying Angela, James' sister.", genres: ["action", "comedy"] },
+             { name: "Frozen", desc: "Fearless optimist Anna teams up with Kristoff in an epic journey, encountering Everest-like conditions, and a hilarious snowman named Olaf in a race to find Anna's sister Elsa, whose icy powers have trapped the kingdom in eternal winter.", genres: ["animation", "adventure"] },
+             { name: "That Awkward Moment", desc: "Three best friends find themselves where we've all been - at that confusing moment in every dating relationship when you have to decide So...where is this going?", genres: ["comedy", "romance"] },
+             { name: "The Nut Job", desc: "An incorrigibly self-serving exiled squirrel finds himself helping his former park brethren raid a nut store to survive, that is also the front for a human gang's bank robbery.", genres: ["animation", "adventure"] },
+             { name: "Lone Survivor", desc: "Marcus Luttrell and his team set out on a mission to capture or kill notorious Taliban leader Ahmad Shah, in late June 2005. Marcus and his team are left to fight for their lives in one of the most valiant efforts of modern warfare.", genres: ["action", "drama", "war"] },
+             { name: "Jack Ryan: Shadow Recruit", desc: "Jack Ryan, as a young covert CIA analyst, uncovers a Russian plot to crash the U.S. economy with a terrorist attack.", genres: ["action", "mystery"] },
+             { name: "Labor Day",desc: "Depressed single mom Adele and her son Henry offer a wounded, fearsome man a ride. As police search town for the escaped convict, the mother and son gradually learn his true story as their options become increasingly limited.", genres: ["drama"] },
+             { name: "American Hustle", desc: "A con man, Irving Rosenfeld, along with his seductive British partner, Sydney Prosser, is forced to work for a wild FBI agent, Richie DiMaso. DiMaso pushes them into a world of Jersey powerbrokers and mafia.", genres: ["crime", "drama"] },
+             { name: "I, Frankenstein", desc: "Frankenstein's creature finds himself caught in an all-out, centuries old war between two immortal clans.", genres: ["action", "fantasy"] },
+             { name: "The Wolf of Wall Street", desc: "Based on the true story of Jordan Belfort, from his rise to a wealthy stockbroker living the high life to his fall involving crime, corruption and the federal government.", genres: ["comedy", "crime"] },
+             { name: "The LEGO Movie", desc: "An ordinary LEGO minifigure, mistakenly thought to be the extraordinary MasterBuilder, is recruited to join a quest to stop an evil LEGO tyrant from gluing the universe together.", genres: ["animation", "action"] },
+             { name: "Paranormal Activity: The Marked Ones",desc: "Jesse begins experiencing a number of disturbing and unexplainable things after the death of his neighbor. As he investigates, it isn't long before Jessie finds he's been marked for ...", genres: ["horror", "thriller"] },
+             { name: "The Monuments Men", desc: "An unlikely World War II platoon are tasked to rescue art masterpieces from Nazi thieves and return them to their owners.", genres: ["action", "drama"] },
+             { name: "The Legend of Hercules", desc: "The origin story of the the mythical Greek hero. Betrayed by his stepfather, the King, and exiled and sold into slavery because of a forbidden love, Hercules must use his formidable powers to fight his way back to his rightful kingdom.", genres: ["action", "adventure"] },
+             { name: "Devil's Due", desc: "After a mysterious, lost night on their honeymoon, a newlywed couple finds themselves dealing with an earlier-than-planned pregnancy. While recording everything for posterity, the husband begins to notice odd behavior in his wife that they initially write off to nerves, but, as the months pass, it becomes evident that the dark changes to her body and mind have a much more sinister origin.", genres: ["horror"] },
+             { name: "Vampire Academy", desc: "Rose Hathaway is a Dhampir, half human/vampire, guardians of the Moroi, peaceful, mortal vampires living discretely within our world. Her legacy is to protect the Moroi from bloodthirsty, immortal Vampires, the Strigoi. This is her story.", genres: ["action", "comedy"] },
+             { name: "Gimme Shelter", desc: "A pregnant teenager flees her abusive mother in search of her father, only to be rejected by her dad and forced to survive on the streets until a compassionate stranger offers a hopeful alternative.", genres: ["drama"] },
+             { name: "Jai Ho", desc: "An ex-army officer initiates a unique idea of propagating social responsibility among ordinary people and in doing so, crosses paths with a powerful political family.", genres: ["action", "drama"] },
+             { name: "Gloria", desc: "A story set in Santiago and centered on Gloria, a free-spirited older woman, and the realities of her whirlwind relationship with a former naval officer whom she meets out in the clubs.", genres: ["comedy", "drama"] },
+             { name: "The Suspect", desc: "Two African American social scientists pose as bank robbers in an effort to understand the racial dynamics of small-town law enforcement. However, their experiment takes an unplanned, deadly turn.", genres: ["thriller"] },
+             { name: "Stranger by the Lake", desc: "Summertime. A cruising spot for men, tucked away on the shores of a lake. Franck falls in love with Michel. An attractive, potent and lethally dangerous man. Franck knows this, but wants to live out his passion anyway.", genres: ["drama"] },
+             { name: "Knights of Badassdom", desc: "Live-action role players conjure up a demon from Hell by mistake and they must deal with the consequences.", genres: ["adventure", "comedy"] },
+             { name: "Like Father, Like Son", desc: "Ryota Nonomiya is a successful businessman driven by money. When he learns that his biological son was switched with another child after birth, he must make a life-changing decision and choose his true son or the boy he raised as his own.", genres: ["drama"] },
+             { name: "The Best Offer", desc: "A master auctioneer becomes obsessed with an extremely reclusive heiress who collects fine art.", genres: ["crime","drama"] }
+        ];
+
+        var loadSearchResultFromServer = function (term, callback) {
+            // simulate loading data from the server
+            window.setTimeout(function () {
+                var result = null;
+                for (var i = 0; i < SERVERSIDE_DB.length; i++) {
+                    var item = SERVERSIDE_DB[i];
+                    if (item.name.toLowerCase().indexOf(term.toLowerCase()) != -1)
+                        result = item;
+                }
+                callback(result);
+            }, 500);
+        };
+
+        var search = function (term) {
+            var el = $('#result')
+            el.empty().append('<span>Loading...</span>');
+
+            loadSearchResultFromServer(term, function (result) {
+                el.empty();
+                el.append('<h2>' + result.name + '</h2>');
+                el.append('<p>Description:</p>');
+                el.append('<p>' + result.desc + '</p>');
+                el.append('<p>Genres:</p>');
+                var genres = '';
+                for (var i = 0; i < result.genres.length; i++)
+                    genres += '<li>' + result.genres[i] + '</li>';
+                el.append('<ul>' + genres + '</ul>');
+            });
+        };
+
+        $('#search input[type=submit]').click(function () {
+            var term = $('#search input[type=text]').val();
+            search(term);
+        });
+
+    });
+    </script>
+</body>
+</html>

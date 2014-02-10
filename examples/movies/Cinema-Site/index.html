@@ -1,0 +1,84 @@
+<html>
+<head>
+    <title>The Local Cinema</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+</head>
+<body>
+    <h1>The Local Cinema - Today's Program</h1>
+    <ul id="movies">Loading...</ul>
+    <div id="paginator"></div>
+
+    <script>
+    $(function () {
+        var SERVERSIDE_PAGES = [
+            ["Ride Along", "Frozen", "That Awkward Moment", "The Nut Job",
+             "Lone Survivor", "Jack Ryan: Shadow Recruit", "Labor Day",
+             "American Hustle", "I, Frankenstein", "The Wolf of Wall Street"],
+            ["The LEGO Movie", "Paranormal Activity: The Marked Ones",
+             "The Monuments Men", "The Legend of Hercules", "Devil's Due",
+             "Vampire Academy", "Gimme Shelter", "Jai Ho", "Gloria"],
+            ["The Suspect", "Stranger by the Lake", "Knights of Badassdom",
+             "Like Father, Like Son", "The Best Offer"]
+        ];
+
+        var pageIndex = 0;
+
+        var loadMoviePageFromServer = function (page, callback) {
+            // simulate loading data from the server
+            window.setTimeout(function () {
+                callback(SERVERSIDE_PAGES[page]);
+            }, 300);
+        };
+
+        var loadPageCountFromServer = function (callback) {
+            // simulate loading data from the server
+            window.setTimeout(function () {
+                callback(SERVERSIDE_PAGES.length);
+            }, 300);
+        };
+
+        var buildMovieList = function (movies) {
+            var html = '';
+            for (var i = 0; i < movies.length; i++)
+                html += '<li>' + movies[i] + '</li>';
+
+            return html;
+        };
+
+
+        var buildLinkToPage = function (page, caption) {
+            caption = caption || ''+page;
+            var link = $('<a href="#">' + caption + '</a>')
+            link.click(function () {
+                pageIndex = page;
+                buildPage(pageIndex);
+            });
+            return link;
+        };
+
+        var buildPaginator = function (index, count) {
+            var html = $('<div></div>');
+
+            if (index > 0)
+                html.append(buildLinkToPage(index-1, '< previous'));
+            html.append('<span> ' + (index+1) + ' </span>');
+            if (index < count-1)
+                html.append(buildLinkToPage(index+1, 'next >'));
+
+            return html;
+       };
+
+        var buildPage = function (index) {
+            loadMoviePageFromServer(index, function (movies) {
+                $('#movies').empty().append(buildMovieList(movies));
+            });
+            loadPageCountFromServer(function (count) {
+                $('#paginator').empty().append(buildPaginator(pageIndex, count));
+            });
+        };
+
+        buildPage(pageIndex);
+    });
+    </script>
+</body>
+</html>
