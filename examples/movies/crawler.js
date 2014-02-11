@@ -65,63 +65,64 @@ var storeMovieFunction = function (context, data) {
   context.data = context.data.concat(data);
 };
 
-var machine = {
-  "initial": {
-    transitions: { "undefined": "Cinema-Page" }
+var crawler = sm.machine([
+
+  {
+    name: "createPage",
+    onentry: u.createPage
   },
 
-  "Cinema-Page": {
-    "initial": {
-      onentry: u.createPage,
-      transitions: { "undefined": "loadPage" }
+  sm.submachine({ name: "Cinema-Page" }, [
+    {
+      name: "loadPage",
+      onentry: u.loadPage(CINEMA_URL)
     },
-    "loadPage": {
-      onentry: u.loadPage(CINEMA_URL),
-      transitions: { "loaded": "waitForData" }
+    {
+      name: "waitForData",
+      onentry: u.wait(1000)
     },
-    "waitForData": {
-      onentry: u.wait(1000),
-      transitions: { "waited": "extractData" }
+    {
+      name: "extractData",
+      onentry: u.extractData(storeTitleFunction, extractTitleFunction)
     },
-    "extractData": {
-      onentry: u.extractData(storeTitleFunction, extractTitleFunction),
-      transitions: { "undefined": "clickOnNext" }
-    },
-    "clickOnNext": {
+    {
+      name: "clickOnNext",
       onentry: u.execute(clickOnNext),
-      transitions: { "next": "waitForData", "no next": "final" }
+      transitions: [
+        ["next", "waitForData"],
+        ["no next", "final"]
+      ]
     },
-    "final": { transitions: { "undefined": "DB-Page" } }
-  },
+    { name: "final" }
+  ]),
 
-  "DB-Page": {
-    "initial": {
-      onentry: u.createPage,
-      transitions: { "undefined": "loadPage" }
+  sm.submachine({ name: "DB-Page" }, [
+    {
+      name: "loadPage",
+      onentry: u.loadPage(DB_URL)
     },
-    "loadPage": {
-      onentry: u.loadPage(DB_URL),
-      transitions: { "loaded": "search" }
-    },
-    "search": {
+    {
+      name: "search",
       onentry: search,
-      transitions: { "undefined": "waitForData", "no title left": "final" }
+      transitions: [
+        ["undefined", "waitForData"],
+        ["no title left", "final"]
+      ]
     },
-    "waitForData": {
-      onentry: u.wait(700),
-      transitions: { "waited": "extractData" }
+    {
+      name: "waitForData",
+      onentry: u.wait(700)
     },
-    "extractData": {
+    {
+      name: "extractData",
       onentry: u.extractData(storeMovieFunction, extractMovieFunction),
-      transitions: { "undefined": "search" }
+      transitions: [ [undefined, "search"] ]
     },
-    "final": { transitions: { "undefined": "final" } }
-  },
+    { name: "final" }
+  ])
 
-  "final": {}
-};
+]);
 
-var crawler = sm.createStateMachine(machine);
 crawler({}, function (event, context) {
   console.log(event, context);
 
