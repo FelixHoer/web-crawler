@@ -43,8 +43,7 @@ var u  = require('../lib/util');
 
 // helper functions
 
-var extractTitleFunction = function () { 
-  // executed in page's context
+var extractTitleFunction = function () { // executed in page's context
   // find html elements that contain the title and extract it
   return jQuery('#movies li').map(function () {
     return $(this).text();
@@ -57,17 +56,16 @@ var storeTitleFunction = function (context, data) {
   context.titles = context.titles.concat(data);
 };
 
-var clickOnNext = function () {
-  // executed in page's context
+var clickOnNext = function () { // executed in page's context
   // find next button ...
-  var el = jQuery('#paginator a:contains("next")').get(0);
-  if (!el)
+  var element = jQuery('#paginator a:contains("next")').get(0);
+  if (!element)
     return 'no next';
 
   // ... and click it
-  var ev = document.createEvent('MouseEvents');
-  ev.initEvent('click', true, true);
-  el.dispatchEvent(ev);
+  var event = document.createEvent('MouseEvents');
+  event.initEvent('click', true, true);
+  element.dispatchEvent(event);
   return 'next'; // the state's return can select a transition
 };
 
@@ -106,6 +104,8 @@ crawler({}, function (event, context) {
   phantom.exit();
 });
 ```
+
+This will print the titles of all movies on the cinema page. But don't you also want to know more details, such as the movie's description or it's genres? See the `examples` folder how you could implement a lookup at a movie-database to also extract that information.
 
 # Install
 
