@@ -4,7 +4,7 @@ The `web-crawler` allows you to extract data from dynamic web pages in a powerfu
 
 # Usage
 
-Consider a dynamic paginated web page of your local cinema. It's HTML could look like that:
+Consider a dynamic **paginated web page** of your local cinema. It's HTML could look like that:
 
 ```html
 <html>
@@ -34,7 +34,7 @@ Consider a dynamic paginated web page of your local cinema. It's HTML could look
 </html>
 ```
 
-A crawler-script to extract all movie titles could be implemented as follows:
+A **crawler-script** to extract all movie titles could be implemented as follows:
 
 ```javascript
 // load dependencies
@@ -58,13 +58,13 @@ var crawler = sm.machine([
   {
     name: "extractData",
     onentry: u.extractData(
-      function (context, data) { // second: store extracted data
-        // add the found movie titles to the already existing (in context)
+      // second: store extracted data, concat into existing context
+      function (context, data) { 
         context.titles = context.titles || [];
         context.titles = context.titles.concat(data);
       }, 
-      function () { // first: extract titles, executed in page's context
-        // find html elements that contain the title and extract it
+      // first: extract titles, executed in page's context
+      function () { 
         return jQuery('#movies li').map(function () {
           return $(this).text();
         }).toArray();
@@ -85,7 +85,7 @@ var crawler = sm.machine([
       return 'next'; // the state's return can select a transition
     }),
     transitions: [
-      ["next", "waitForData"], // another page exists? transition to previous state
+      ["next", "waitForData"], // transition to previous state if next button exists
       ["no next", "final"]
     ]
   },
@@ -99,11 +99,13 @@ crawler({}, function (event, context) {
 });
 ```
 
-This will print the titles of all movies on the cinema page. But don't you also want to know more details, such as the movie's description or it's genres? See the `examples` folder how you could implement a lookup at a movie-database to also extract that information.
+This will print the titles of all movies gathered from the individual pages of the cinema site. It wasn't that painful even though parts of the page were dynamically created and updated.
+
+But don't you also want to know more details, such as the movie's description or it's genres? See the `examples` folder how you could include a lookup at a movie-database to also extract that information.
 
 # Install
 
-1. Download [PhantomJS]()
+1. Download [PhantomJS](PhantomJS)
 
   Get a build from their [download page](http://phantomjs.org/download.html).
 
@@ -119,7 +121,7 @@ TODO
 
 # Dependencies
 
-* [PhantomJS]() (tested with 1.9.7) : a headless browser
+* [PhantomJS](PhantomJS) (tested with 1.9.7) : a headless browser
 
 # License
 
