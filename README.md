@@ -109,7 +109,13 @@ But don't you also want to know more details, such as the movie's description or
 
   Get a build from their [download page](http://phantomjs.org/download.html).
 
-2. Run your script
+2. Get the `web-crawler` scripts
+
+  ```bash
+  git clone https://github.com/FelixHoer/web-crawler.git
+  ```
+
+3. Run your script that uses the `web-crawler`
 
   ```bash
   /path/to/bin/phantomjs your-script.js
