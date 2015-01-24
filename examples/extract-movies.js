@@ -1,10 +1,10 @@
 // Author: Felix Hoerandner (2014)
 
-var sm = require('../../lib/sm');
-var u  = require('../../lib/util');
+var sm = require('../lib/sm');
+var u  = require('../lib/util');
 
-var CINEMA_URL = 'http://localhost:10000/';
-var DB_URL     = 'http://localhost:10001/';
+var CINEMA_URL = 'http://localhost:10000/cinema/';
+var DB_URL     = 'http://localhost:10000/movie-database/';
 
 var extractTitleFunction = function () {
   var movies = jQuery('#movies li').map(function () {

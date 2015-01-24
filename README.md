@@ -1,7 +1,6 @@
 # web-crawler
 
-The `web-crawler` allows you to extract data from dynamic web pages in a powerful, jet convenient way. This is possible by using a headless browser, that injects your crawl-code into the running page-context.
-It also provides a web-server, that serves crawl-results and static files to process and display the gathered information.
+The `web-crawler` allows you to extract data from dynamic web pages in a powerful, yet convenient way. This is possible by using [PhantomJS]() - a headless browser - which injects your crawl-code into running pages. To handle complex scenarios the sequence of operations is expressed as a state machine.
 
 # Usage
 

@@ -1,9 +1,9 @@
 // Author: Felix Hoerandner (2014)
 
-var sm = require('../../lib/sm');
-var u  = require('../../lib/util');
+var sm = require('../lib/sm');
+var u  = require('../lib/util');
 
-var SHOP_URL   = 'http://localhost:9000/';
+var SHOP_URL   = 'http://localhost:10000/simple-shop/';
 var JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js';
 
 var extractFunction = function () {
