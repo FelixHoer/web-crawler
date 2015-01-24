@@ -41,34 +41,6 @@ A crawler-script to extract all movie titles could be implemented as follows:
 var sm = require('../lib/sm');
 var u  = require('../lib/util');
 
-// helper functions
-
-var extractTitleFunction = function () { // executed in page's context
-  // find html elements that contain the title and extract it
-  return jQuery('#movies li').map(function () {
-    return $(this).text();
-  }).toArray();
-};
-
-var storeTitleFunction = function (context, data) {
-  // add the found movie titles to the already existing (in context)
-  context.titles = context.titles || [];
-  context.titles = context.titles.concat(data);
-};
-
-var clickOnNext = function () { // executed in page's context
-  // find next button ...
-  var element = jQuery('#paginator a:contains("next")').get(0);
-  if (!element)
-    return 'no next';
-
-  // ... and click it
-  var event = document.createEvent('MouseEvents');
-  event.initEvent('click', true, true);
-  element.dispatchEvent(event);
-  return 'next'; // the state's return can select a transition
-};
-
 // define the crawler state machine
 var crawler = sm.machine([
   {
@@ -85,11 +57,33 @@ var crawler = sm.machine([
   },
   {
     name: "extractData",
-    onentry: u.extractData(storeTitleFunction, extractTitleFunction)
+    onentry: u.extractData(
+      function (context, data) { // second: store extracted data
+        // add the found movie titles to the already existing (in context)
+        context.titles = context.titles || [];
+        context.titles = context.titles.concat(data);
+      }, 
+      function () { // first: extract titles, executed in page's context
+        // find html elements that contain the title and extract it
+        return jQuery('#movies li').map(function () {
+          return $(this).text();
+        }).toArray();
+      })
   },
   {
     name: "clickOnNext",
-    onentry: u.execute(clickOnNext),
+    onentry: u.execute(function () { // executed in page's context
+      // find next button ...
+      var element = jQuery('#paginator a:contains("next")').get(0);
+      if (!element)
+        return 'no next';
+
+      // ... and click it
+      var event = document.createEvent('MouseEvents');
+      event.initEvent('click', true, true);
+      element.dispatchEvent(event);
+      return 'next'; // the state's return can select a transition
+    }),
     transitions: [
       ["next", "waitForData"], // another page exists? transition to previous state
       ["no next", "final"]
