@@ -35,7 +35,7 @@ Consider a dynamic **paginated web page** of your local cinema. It's HTML could 
 </html>
 ```
 
-So how would we extract all movie titles of this site? Let's just do as we would while viewing in a browser. Open the browser (`createPage`), go to the cinema site (`loadPage`), wait until it is done loading (`waitForData`) and take in the information of the current page (`extractData`). If there is a "next" button we would click (`clickOnNext`) it and then we would have to wait again until it is loaded (`waitForData`). Otherwise, if there is no "next" button, we would have seen all pages, and we would be done (`final`). These natural steps can easily be transformed into a state machine. The corresponding **crawler-script** could be implemented as follows:
+So how would we extract all movie titles of this site? Let's just do as we would while viewing in a browser. Open the browser (`createPage`), go to the cinema site (`loadPage`), wait until it is done loading (`waitForData`) and take in the information of the current page (`extractData`). If there is a "next" button, we would click it (`clickOnNext`) and then we would have to wait again until it is loaded (`waitForData`). Otherwise, if there is no "next" button, we would have seen all pages, and we would be done (`final`). These natural steps can easily be transformed into a state machine. The corresponding **crawler-script** could be implemented as follows:
 
 ```javascript
 // load dependencies
@@ -103,6 +103,8 @@ crawler({}, function (event, context) {
 This will print the titles of all movies gathered from the individual pages of the cinema site. It wasn't that painful even though parts of the page were dynamically created and updated.
 
 But don't you also want to know more details, such as the movie's description or it's genres? See the `examples` folder how you could include a lookup at a movie-database to also extract that information.
+
+And how could I use the crawling capabilities from my favorite language? A crawler can easily be exposed as a web service. Then you just send a HTTP request to trigger it. See the `examples` folder on how to implement this.
 
 # Install
 
