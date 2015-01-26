@@ -26,7 +26,8 @@ Consider a dynamic **paginated web page** of your local cinema. It's HTML could 
   </ul>
 
   <div id="paginator">
-    <span>1</span>
+    <a href="#">previous</a>
+    <span>2</span>
     <a href="#">next</a>
   </div>
 
@@ -34,7 +35,7 @@ Consider a dynamic **paginated web page** of your local cinema. It's HTML could 
 </html>
 ```
 
-A **crawler-script** to extract all movie titles could be implemented as follows:
+So how would we extract all movie titles of this site? Let's just do as we would while viewing in a browser. Open the browser (`createPage`), go to the cinema site (`loadPage`), wait until it is done loading (`waitForData`) and take in the information of the current page (`extractData`). If there is a "next" button we would click (`clickOnNext`) it and then we would have to wait again until it is loaded (`waitForData`). Otherwise, if there is no "next" button, we would have seen all pages, and we would be done (`final`). These natural steps can easily be transformed into a state machine. The corresponding **crawler-script** could be implemented as follows:
 
 ```javascript
 // load dependencies
