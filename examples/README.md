@@ -19,7 +19,16 @@ cd examples
 /path/to/bin/phantomjs extract-shop-items.js
 ```
 
-## Movie Titles Example 
+## Webserver for Simple Shop Example (serve-shop-items.js)
+
+This example provides access to the crawler from the Simple Shop Example via a web server.
+
+```bash
+cd examples
+/path/to/bin/phantomjs serve-shop-items.js
+```
+
+## Movie Titles Example (extract-movie-titles.js)
 
 This example shows you how to deal with dynamic paginated webpages. The movies of the local cinema shows the titles of today's movies. This list is paginated and new pages are loaded via AJAX calls. Run it with:
 
