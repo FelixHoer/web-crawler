@@ -126,11 +126,104 @@ And how could I use the crawling capabilities from my favorite language? A crawl
 
 # API
 
-TODO
+## State Machine (sm.js)
+
+In general, a state machine consists of one start state, transitions between the states and at least one final state. In this implementation when a state is entered, a function is called (`onentry`). If there are multiple outgoing transitions from a state, one can be selected by the output of the `onentry` function. For convenience, there is always a default transition to the next state in the list, that is taken if no other transition matches.
+
+### State
+
+A state is represented as a object with the following keys:
+
+* `name` `String` (optional): a name for the state.
+* `onentry` `function(context, done)` (optional): this function is called when the state machine transitions into this state.
+  * `context` `any type`: a context object, as described below.
+  * `done` `function(event)`: a function that has to be called in the onentry-function to signify that the function has fulfilled it's purpose.
+* `transitions` `[]`: an array of transition-objects, which may look as follows: `[event, state-name]`. The first parameter supplied to the `onentry`'s `done` function is matched with `event`. If a match is found, the state machine transitions to a state with the given `state-name`.
+
+### Context
+
+The context is a way to share data between the states of the state machine. It is initially provided by the user when starting the state machine. Each `onentry` function will receive the same object. They can access data stored in it by previous states, or add data that was generated in the current call. After the state machine terminated, the context object will be provided to the state machine's callback.
+
+### sm.machine(states)
+
+**Parameters**:
+
+* `states` `[]`: an array of State-objects, as described above.
+  
+**Returns** `function(context, callback)`: The state machine is started by calling this function.
+
+* `context` `any type`: a context object, as described below.
+* `callback` `function(event, context)`: This function is called after the final state has been processed.
+  * `event`: the event emitted from the last state
+  * `context`: the initially provided context-object. It should now be populated with the extracted data.
+
+**Algorithm**:
+
+1. The state machine starts with the first state in the `states` array.
+2. The `onentry` function of that state is looked up.
+  1. If there is an `onentry`-function, it is called. The user-provided function does it's work (like starting to load a page). Once it is done, it emits an event by calling the `done`-function with the event as first parameter (like loading was successful).
+  2. If there is no `onentry`-function, a event of `undefined` is emitted.
+3. The `transitions` array of the current state is looked up.
+  1. If there is a `transitions` array, the event is used to look up transition.
+    1. If there is a matching transition, the machine transitions into a state with the given name.
+    2. Otherwise, the state machine transitions to the next state in the states array.
+  2. If there is no `transitions` array, the state machine transitions to the next state in the `states` array.
+4. The state that was transitioned to is now the current state and executed as described in 2.
+5. If the last state in the states array was executed and the state machine tries to execute the (not existing) next state, it terminates. Then the machine's `callback`-function is invoked with an event of "exit".
+6. If there was an error during a state execution, such as an exception or an not found state-name, the machine's `callback`-function is called with an event of "error" or "not-found".
+
+### sm.submachine(properties, states)
+
+This function encapsulates a whole state-machine into a single state. This makes it easier to compose more complex machines from simpler ones.
+
+**Parameters**:
+
+* `properties`: a state object as described above. It's `onentry` will be overwritten with one, that performes the algorithm on it's child `states`.
+* `states` `[]`: an array of state objects as described above.
+
+**Returns**: a state object.
+
+## Utilities (util.js)
+
+### u.createPage(context, done)
+
+This function acts as an `onentry` function of a state. It creates a phantomjs web page and stores it in `context.page`. Then it calls `done` with an event of `undefined`.
+
+### u.loadPage(url)
+
+This function returns an `onentry` function of a state. It navigates the phantomjs web page (`context.page`) to the given url. A `loaded` is emitted via the `onentry`-function's `done`, if the navigation succeeded. Otherwise an `error` is emitted.
+
+### u.injectScripts(scripts)
+
+This function returns an `onentry` function of a state. It takes an array of URLs that point to remote or local javascript files. Those are injected into the phantomjs web page (`context.page`) one after the other. A `injected` is emitted via the `onentry`-function's `done`, if the scripts were injected successfully. Otherwise an `error` is emitted.
+
+### u.extractData(storeFun, fun, args)
+
+This function returns an `onentry` function of a state. It executes the given function `fun` with the arguments `args` in the context of the phantomjs page (`context.page`). Whatever is returned by that function is passed as the second parameter to the function `storeFun` (`function(context, data)`). A `undefined` is emitted via the `onentry`-function's `done`.
+
+### u.execute(fun, args)
+
+This function returns an `onentry` function of a state. It behaves like `u.extractData`, but it does not use a `storeFun`. Instead the data extracted from the page is emitted via the `onentry`-function's `done`.
+
+### u.navigate(fun, args)
+
+This function returns an `onentry` function of a state. It executes the given function `fun` with the arguments `args` in the context of the phantomjs page (`context.page`). That function should trigger some navigation, such as a click on a link. A `loaded` is emitted via the `onentry`-function's `done`, once the page is done loading.
+
+### u.wait(time)
+
+This function returns an `onentry` function of a state. After `time` milliseconds, a `weited` is emitted via the `onentry`-function's `done`.
+
+### u.waitUntilLoaded()
+
+This function returns an `onentry` function of a state. A `loaded` is emitted via the `onentry`-function's `done`, once the page is done loading.
+
+### u.serve(crawler, port)
+
+This function starts a webserver that listens to the given `port`. Every time a HTTP request is received, the state machine given by `crawler` is triggered. The GET and POST parameters supplied via the request are available through `context.getParams` and `context.postParams`. Whatever is under `context.data` when the crawler terminates will be sent back in the HTTP response in JSON format. The `serve` function returns a `function()` that will close the server when called.
 
 # Dependencies
 
-* [PhantomJS](PhantomJS) (tested with 1.9.7) : a headless browser
+* [PhantomJS](PhantomJS) (tested with 1.9.8) : a headless browser
 
 # License
 
